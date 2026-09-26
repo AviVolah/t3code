@@ -595,24 +595,30 @@ function buildCodexTurnInstructions(input: {
   readonly browserToolsAvailable?: boolean | T3CodeToolAvailability;
   readonly customInstructions?: string;
 }): Pick<CodexTurnStartParamsWithCollaborationMode, "collaborationMode" | "additionalContext"> {
-  if (input.interactionMode === undefined && !input.customInstructions?.trim()) {
-    return {};
+  if (input.interactionMode === undefined) {
+    const customInstructions = input.customInstructions?.trim();
+    return customInstructions
+      ? {
+          additionalContext: {
+            t3_custom_instructions: {
+              kind: "application",
+              value: customInstructions,
+            },
+          },
+        }
+      : {};
   }
   const model = normalizeCodexModelSlug(input.model) ?? DEFAULT_MODEL;
   const reasoningEffort = input.effort ?? "medium";
   return {
-    ...(input.interactionMode !== undefined
-      ? {
-          collaborationMode: {
-            mode: input.interactionMode,
-            settings: {
-              model,
-              reasoning_effort: reasoningEffort,
-              developer_instructions: buildCodexDeveloperInstructions(input.interactionMode),
-            },
-          },
-        }
-      : {}),
+    collaborationMode: {
+      mode: input.interactionMode,
+      settings: {
+        model,
+        reasoning_effort: reasoningEffort,
+        developer_instructions: buildCodexDeveloperInstructions(input.interactionMode),
+      },
+    },
     additionalContext: buildCodexAdditionalContext(
       { model, modelName: input.modelName, reasoningEffort },
       input.browserToolsAvailable ?? true,
