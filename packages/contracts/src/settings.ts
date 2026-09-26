@@ -610,6 +610,18 @@ export const CodexSettings = makeProviderSettingsSchema(
         },
       }),
     ),
+    customInstructions: Schema.String.pipe(
+      Schema.withDecodingDefault(Effect.succeed("")),
+      Schema.annotateKey({
+        title: "Custom instructions",
+        description: "Instructions T3 adds to every new session for this provider instance.",
+        providerSettingsForm: {
+          control: "textarea",
+          placeholder: "e.g. Prefer concise explanations and run focused tests.",
+          clearWhenEmpty: "omit",
+        },
+      }),
+    ),
     launchArgs: TrimmedString.pipe(
       Schema.withDecodingDefault(Effect.succeed("")),
       Schema.annotateKey({
@@ -623,7 +635,7 @@ export const CodexSettings = makeProviderSettingsSchema(
     ),
   },
   {
-    order: ["binaryPath", "homePath", "shadowHomePath", "launchArgs"],
+    order: ["binaryPath", "homePath", "shadowHomePath", "customInstructions", "launchArgs"],
   },
 );
 export type CodexSettings = typeof CodexSettings.Type;
@@ -659,6 +671,18 @@ export const ClaudeSettings = makeProviderSettingsSchema(
       Schema.withDecodingDefault(Effect.succeed([])),
       Schema.annotateKey({ providerSettingsForm: { hidden: true } }),
     ),
+    customInstructions: Schema.String.pipe(
+      Schema.withDecodingDefault(Effect.succeed("")),
+      Schema.annotateKey({
+        title: "Custom instructions",
+        description: "Instructions T3 adds to every new session for this provider instance.",
+        providerSettingsForm: {
+          control: "textarea",
+          placeholder: "e.g. Prefer concise explanations and run focused tests.",
+          clearWhenEmpty: "omit",
+        },
+      }),
+    ),
     launchArgs: Schema.String.pipe(
       Schema.withDecodingDefault(Effect.succeed("")),
       Schema.annotateKey({
@@ -686,7 +710,7 @@ export const ClaudeSettings = makeProviderSettingsSchema(
     ),
   },
   {
-    order: ["binaryPath", "homePath", "autoCompactWindow", "launchArgs"],
+    order: ["binaryPath", "homePath", "autoCompactWindow", "customInstructions", "launchArgs"],
   },
 );
 export type ClaudeSettings = typeof ClaudeSettings.Type;
