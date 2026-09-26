@@ -184,6 +184,29 @@ Use the \`request_user_input\` tool only when it is listed in the available tool
 In Default mode, strongly prefer making reasonable assumptions and executing the user's request rather than stopping to ask questions. If you absolutely must ask a question because the answer cannot be discovered from local context and a reasonable assumption would be risky, ask the user directly with a concise plain-text question. Never write a multiple choice question as a textual assistant message.
 </collaboration_mode>`;
 
+const CUSTOM_INSTRUCTIONS_CONTEXT_CHUNK_BYTES = 3_500;
+
+function chunkCustomInstructions(value: string): ReadonlyArray<string> {
+  const chunks: string[] = [];
+  let current = "";
+  let currentBytes = 0;
+
+  for (const char of value) {
+    const charBytes = Buffer.byteLength(char);
+    if (current && currentBytes + charBytes > CUSTOM_INSTRUCTIONS_CONTEXT_CHUNK_BYTES) {
+      chunks.push(current);
+      current = char;
+      currentBytes = charBytes;
+      continue;
+    }
+    current += char;
+    currentBytes += charBytes;
+  }
+
+  if (current) chunks.push(current);
+  return chunks;
+}
+
 export interface CodexRuntimeInfo {
   readonly model: string;
   readonly modelName?: string | undefined;
@@ -218,6 +241,18 @@ export function buildCodexAdditionalContext(
 ): Record<string, V2TurnStartParams__AdditionalContextEntry> {
   const tools = toolInstructions(toolsAvailable);
   const customInstructionsBlock = customInstructions?.trim();
+  const customInstructionEntries: Record<string, V2TurnStartParams__AdditionalContextEntry> = {};
+  if (customInstructionsBlock) {
+    const chunks = chunkCustomInstructions(customInstructionsBlock);
+    chunks.forEach((value, index) => {
+      customInstructionEntries[
+        chunks.length === 1 ? "t3_custom_instructions" : `t3_custom_instructions_${index + 1}`
+      ] = {
+        kind: "application",
+        value,
+      };
+    });
+  }
   // Separate keys keep each value under Codex's per-entry token cap.
   return {
     t3_code_runtime: {
@@ -225,13 +260,6 @@ export function buildCodexAdditionalContext(
       value: buildRuntimeInstructions({ harness: "Codex", ...runtime }),
     },
     ...(tools ? { t3_code_tools: { kind: "application", value: tools } } : {}),
-    ...(customInstructionsBlock
-      ? {
-          t3_custom_instructions: {
-            kind: "application",
-            value: customInstructionsBlock,
-          },
-        }
-      : {}),
+    ...customInstructionEntries,
   };
 }
