@@ -42,6 +42,7 @@ import { codexSessionAppServerArgs } from "./codexLaunchArgs.ts";
 import { expandHomePath } from "../../pathExpansion.ts";
 import {
   buildCodexAdditionalContext,
+  buildCodexCustomInstructionsContext,
   buildCodexDeveloperInstructions,
   type T3CodeToolAvailability,
 } from "../CodexDeveloperInstructions.ts";
@@ -596,16 +597,9 @@ function buildCodexTurnInstructions(input: {
   readonly customInstructions?: string;
 }): Pick<CodexTurnStartParamsWithCollaborationMode, "collaborationMode" | "additionalContext"> {
   if (input.interactionMode === undefined) {
-    const customInstructions = input.customInstructions?.trim();
-    return customInstructions
-      ? {
-          additionalContext: {
-            t3_custom_instructions: {
-              kind: "application",
-              value: customInstructions,
-            },
-          },
-        }
+    const customInstructions = buildCodexCustomInstructionsContext(input.customInstructions);
+    return Object.keys(customInstructions).length > 0
+      ? { additionalContext: customInstructions }
       : {};
   }
   const model = normalizeCodexModelSlug(input.model) ?? DEFAULT_MODEL;
