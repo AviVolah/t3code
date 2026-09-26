@@ -2282,6 +2282,9 @@ export const makeCodexAdapter = Effect.fn("makeCodexAdapter")(function* (
           binaryPath: codexConfig.binaryPath,
           ...(options?.models ? { models: options.models } : {}),
           launchArgs: resolveCodexLaunchArgs(codexConfig.launchArgs, options?.environment),
+          ...(codexConfig.customInstructions
+            ? { customInstructions: codexConfig.customInstructions }
+            : {}),
           ...(options?.environment ? { environment: options.environment } : {}),
           ...(codexConfig.homePath ? { homePath: codexConfig.homePath } : {}),
           ...(isCodexResumeCursorSchema(input.resumeCursor)
