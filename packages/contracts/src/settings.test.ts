@@ -912,6 +912,21 @@ describe("ServerSettingsPatch.providerInstances", () => {
   });
 });
 
+describe("ServerSettingsPatch provider custom instructions", () => {
+  it("preserves multiline custom instructions for Codex and Claude", () => {
+    const customInstructions = "Prefer concise explanations.\nRun focused tests.";
+    const patch = decodeServerSettingsPatch({
+      providers: {
+        codex: { customInstructions },
+        claudeAgent: { customInstructions },
+      },
+    });
+
+    expect(patch.providers?.codex?.customInstructions).toBe(customInstructions);
+    expect(patch.providers?.claudeAgent?.customInstructions).toBe(customInstructions);
+  });
+});
+
 describe("ServerSettingsPatch string normalization", () => {
   it("trims string settings while decoding patches", () => {
     const patch = decodeServerSettingsPatch({
