@@ -306,10 +306,12 @@ describe("buildTurnStartParams", () => {
     );
 
     NodeAssert.equal(params.collaborationMode, undefined);
-    NodeAssert.equal(
-      params.additionalContext?.t3_custom_instructions?.value,
-      "Prefer concise explanations.",
-    );
+    NodeAssert.deepStrictEqual(params.additionalContext, {
+      t3_custom_instructions: {
+        kind: "application",
+        value: "Prefer concise explanations.",
+      },
+    });
   });
 
   it("reports the same fallback model and effort in settings and instructions", () => {
