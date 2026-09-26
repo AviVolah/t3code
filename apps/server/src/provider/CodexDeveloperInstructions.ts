@@ -229,6 +229,24 @@ export function buildCodexDeveloperInstructions(interactionMode: ProviderInterac
  * its own text for a mode, as newer models do, Codex uses that text and drops
  * the client's `developer_instructions` entirely.
  */
+function buildCodexCustomInstructionsContext(
+  customInstructions: string | undefined,
+): Record<string, V2TurnStartParams__AdditionalContextEntry> {
+  const customInstructionsBlock = customInstructions?.trim();
+  if (!customInstructionsBlock) return {};
+
+  const chunks = chunkCustomInstructions(customInstructionsBlock);
+  return Object.fromEntries(
+    chunks.map((value, index) => [
+      chunks.length === 1 ? "t3_custom_instructions" : `t3_custom_instructions_${index + 1}`,
+      {
+        kind: "application" as const,
+        value,
+      },
+    ]),
+  );
+}
+
 export function buildCodexAdditionalContext(
   runtime: CodexRuntimeInfo,
   /**
@@ -240,19 +258,6 @@ export function buildCodexAdditionalContext(
   customInstructions?: string,
 ): Record<string, V2TurnStartParams__AdditionalContextEntry> {
   const tools = toolInstructions(toolsAvailable);
-  const customInstructionsBlock = customInstructions?.trim();
-  const customInstructionEntries: Record<string, V2TurnStartParams__AdditionalContextEntry> = {};
-  if (customInstructionsBlock) {
-    const chunks = chunkCustomInstructions(customInstructionsBlock);
-    chunks.forEach((value, index) => {
-      customInstructionEntries[
-        chunks.length === 1 ? "t3_custom_instructions" : `t3_custom_instructions_${index + 1}`
-      ] = {
-        kind: "application",
-        value,
-      };
-    });
-  }
   // Separate keys keep each value under Codex's per-entry token cap.
   return {
     t3_code_runtime: {
@@ -260,6 +265,6 @@ export function buildCodexAdditionalContext(
       value: buildRuntimeInstructions({ harness: "Codex", ...runtime }),
     },
     ...(tools ? { t3_code_tools: { kind: "application", value: tools } } : {}),
-    ...customInstructionEntries,
+    ...buildCodexCustomInstructionsContext(customInstructions),
   };
 }
