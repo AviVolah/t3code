@@ -16,8 +16,24 @@ describe("ProviderSettingsForm helpers", () => {
       "binaryPath",
       "homePath",
       "shadowHomePath",
+      "customInstructions",
       "launchArgs",
     ]);
+  });
+
+  it("renders custom agent instructions as a textarea", () => {
+    const codex = DRIVER_OPTION_BY_VALUE[ProviderDriverKind.make("codex")];
+    expect(codex).toBeDefined();
+
+    const customInstructions = deriveProviderSettingsFields(codex!).find(
+      (field) => field.key === "customInstructions",
+    );
+
+    expect(customInstructions).toMatchObject({
+      label: "Custom instructions",
+      control: "textarea",
+      clearWhenEmpty: "omit",
+    });
   });
 
   it("sources labels and descriptions from schema annotations", () => {
@@ -66,6 +82,7 @@ describe("ProviderSettingsForm helpers", () => {
       "binaryPath",
       "homePath",
       "autoCompactWindow",
+      "customInstructions",
       "launchArgs",
     ]);
   });
