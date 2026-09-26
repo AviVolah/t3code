@@ -214,8 +214,10 @@ export function buildCodexAdditionalContext(
    * setting, so the prompt cannot claim tools the turn doesn't have.
    */
   toolsAvailable: boolean | T3CodeToolAvailability = true,
+  customInstructions?: string,
 ): Record<string, V2TurnStartParams__AdditionalContextEntry> {
   const tools = toolInstructions(toolsAvailable);
+  const customInstructionsBlock = customInstructions?.trim();
   // Separate keys keep each value under Codex's per-entry token cap.
   return {
     t3_code_runtime: {
@@ -223,5 +225,13 @@ export function buildCodexAdditionalContext(
       value: buildRuntimeInstructions({ harness: "Codex", ...runtime }),
     },
     ...(tools ? { t3_code_tools: { kind: "application", value: tools } } : {}),
+    ...(customInstructionsBlock
+      ? {
+          t3_custom_instructions: {
+            kind: "application",
+            value: customInstructionsBlock,
+          },
+        }
+      : {}),
   };
 }
