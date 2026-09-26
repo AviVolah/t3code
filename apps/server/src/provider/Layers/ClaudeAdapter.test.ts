@@ -462,6 +462,29 @@ describe("ClaudeAdapterLive", () => {
     );
   });
 
+  it.effect("appends configured custom instructions to the Claude system prompt", () => {
+    const harness = makeHarness({
+      claudeConfig: { customInstructions: "  Prefer concise explanations.  " },
+    });
+    return Effect.gen(function* () {
+      const adapter = yield* ClaudeAdapter;
+      yield* adapter.startSession({
+        threadId: THREAD_ID,
+        provider: ProviderDriverKind.make("claudeAgent"),
+        runtimeMode: "full-access",
+      });
+
+      assert.deepEqual(harness.getLastCreateQueryInput()?.options.systemPrompt, {
+        type: "preset",
+        preset: "claude_code",
+        append: `${buildRuntimeInstructions({ harness: "Claude Code" })}\n\nPrefer concise explanations.`,
+      });
+    }).pipe(
+      Effect.provideService(Random.Random, makeDeterministicRandomService()),
+      Effect.provide(harness.layer),
+    );
+  });
+
   it.effect("derives auto permission mode from auto runtime policy without skip flag", () => {
     const harness = makeHarness();
     return Effect.gen(function* () {
