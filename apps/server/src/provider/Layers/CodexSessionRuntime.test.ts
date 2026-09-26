@@ -657,6 +657,20 @@ describe("buildCodexAdditionalContext", () => {
     });
   });
 
+  it("chunks long custom instructions without losing content", () => {
+    const customInstructions = "🙂".repeat(2_500);
+    const context = buildCodexAdditionalContext(runtime, false, customInstructions);
+    const customEntries = Object.entries(context)
+      .filter(([key]) => key.startsWith("t3_custom_instructions"))
+      .map(([, entry]) => entry.value);
+
+    NodeAssert.equal(customEntries.join(""), customInstructions);
+    NodeAssert.ok(customEntries.length > 1);
+    for (const value of customEntries) {
+      NodeAssert.ok(Buffer.byteLength(value) < 4_000);
+    }
+  });
+
   it("keeps every entry under Codex's 1,000 token cap per entry", () => {
     const context = buildCodexAdditionalContext(runtime, { browser: true, device: true });
     for (const entry of Object.values(context)) {
