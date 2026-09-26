@@ -176,6 +176,7 @@ export interface CodexSessionRuntimeOptions {
   readonly binaryPath: string;
   readonly homePath?: string;
   readonly launchArgs?: string;
+  readonly customInstructions?: string;
   readonly environment?: NodeJS.ProcessEnv;
   readonly cwd: string;
   readonly runtimeMode: RuntimeMode;
@@ -592,24 +593,30 @@ function buildCodexTurnInstructions(input: {
   readonly modelName?: string;
   readonly effort?: EffectCodexSchema.V2TurnStartParams__ReasoningEffort;
   readonly browserToolsAvailable?: boolean | T3CodeToolAvailability;
+  readonly customInstructions?: string;
 }): Pick<CodexTurnStartParamsWithCollaborationMode, "collaborationMode" | "additionalContext"> {
-  if (input.interactionMode === undefined) {
+  if (input.interactionMode === undefined && !input.customInstructions?.trim()) {
     return {};
   }
   const model = normalizeCodexModelSlug(input.model) ?? DEFAULT_MODEL;
   const reasoningEffort = input.effort ?? "medium";
   return {
-    collaborationMode: {
-      mode: input.interactionMode,
-      settings: {
-        model,
-        reasoning_effort: reasoningEffort,
-        developer_instructions: buildCodexDeveloperInstructions(input.interactionMode),
-      },
-    },
+    ...(input.interactionMode !== undefined
+      ? {
+          collaborationMode: {
+            mode: input.interactionMode,
+            settings: {
+              model,
+              reasoning_effort: reasoningEffort,
+              developer_instructions: buildCodexDeveloperInstructions(input.interactionMode),
+            },
+          },
+        }
+      : {}),
     additionalContext: buildCodexAdditionalContext(
       { model, modelName: input.modelName, reasoningEffort },
       input.browserToolsAvailable ?? true,
+      input.customInstructions,
     ),
   };
 }
@@ -634,6 +641,7 @@ export function buildTurnStartParams(input: {
   readonly interactionMode?: ProviderInteractionMode;
   /** Defaults to true so callers that predate the agent-access gate are unchanged. */
   readonly browserToolsAvailable?: boolean | T3CodeToolAvailability;
+  readonly customInstructions?: string;
 }): Effect.Effect<
   CodexTurnStartParamsWithCollaborationMode,
   CodexErrors.CodexAppServerProtocolParseError
@@ -656,6 +664,7 @@ export function buildTurnStartParams(input: {
     ...(input.modelName ? { modelName: input.modelName } : {}),
     ...(input.effort ? { effort: input.effort } : {}),
     browserToolsAvailable: input.browserToolsAvailable ?? true,
+    ...(input.customInstructions ? { customInstructions: input.customInstructions } : {}),
   });
 
   return decodeCodexTurnStartParamsWithCollaborationMode({
@@ -2581,6 +2590,9 @@ export const makeCodexSessionRuntime = (
               options.appServerArgs,
               options.mcpCapabilities,
             ),
+            ...(options.customInstructions
+              ? { customInstructions: options.customInstructions }
+              : {}),
           });
           yield* Ref.set(lastAdditionalContextRef, params.additionalContext);
           const rawResponse = yield* client.raw.request("turn/start", params);
