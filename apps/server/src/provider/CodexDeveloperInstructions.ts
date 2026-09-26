@@ -229,7 +229,7 @@ export function buildCodexDeveloperInstructions(interactionMode: ProviderInterac
  * its own text for a mode, as newer models do, Codex uses that text and drops
  * the client's `developer_instructions` entirely.
  */
-function buildCodexCustomInstructionsContext(
+export function buildCodexCustomInstructionsContext(
   customInstructions: string | undefined,
 ): Record<string, V2TurnStartParams__AdditionalContextEntry> {
   const customInstructionsBlock = customInstructions?.trim();
