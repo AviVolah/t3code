@@ -295,6 +295,23 @@ describe("buildTurnStartParams", () => {
     });
   });
 
+  it("injects custom instructions even when no collaboration mode is selected", () => {
+    const params = Effect.runSync(
+      buildTurnStartParams({
+        threadId: "provider-thread-1",
+        runtimeMode: "full-access",
+        prompt: "Go",
+        customInstructions: "Prefer concise explanations.",
+      }),
+    );
+
+    NodeAssert.equal(params.collaborationMode, undefined);
+    NodeAssert.equal(
+      params.additionalContext?.t3_custom_instructions?.value,
+      "Prefer concise explanations.",
+    );
+  });
+
   it("reports the same fallback model and effort in settings and instructions", () => {
     const params = Effect.runSync(
       buildTurnStartParams({
@@ -625,6 +642,19 @@ describe("buildCodexAdditionalContext", () => {
 
     NodeAssert.match(value, /as gpt 5\.3 codex with high effort reasoning effort/);
     NodeAssert.doesNotMatch(value, /<runtime_info>[^<]*\n/);
+  });
+
+  it("adds configured custom instructions as their own application context", () => {
+    const context = buildCodexAdditionalContext(
+      runtime,
+      false,
+      "  Prefer concise explanations.\nRun focused tests.  ",
+    );
+
+    NodeAssert.deepStrictEqual(context.t3_custom_instructions, {
+      kind: "application",
+      value: "Prefer concise explanations.\nRun focused tests.",
+    });
   });
 
   it("keeps every entry under Codex's 1,000 token cap per entry", () => {
